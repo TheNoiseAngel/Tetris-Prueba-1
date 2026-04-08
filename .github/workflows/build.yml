@@ -28,7 +28,7 @@ jobs:
       # 2. /MT incluye las librerías estándar dentro del exe
       # 3. /link conecta con las librerías de SDL2
       run: |
-        cl.exe /EHsc /MT /Isdl2_dev\SDL2-2.30.2\include src/Main.cpp /Fe:Breakout.exe /link /LIBPATH:sdl2_dev\SDL2-2.30.2\lib\x64 SDL2.lib SDL2main.lib shell32.lib /SUBSYSTEM:WINDOWS
+        cl.exe /EHsc /MT /Isdl2_dev\SDL2-2.30.2\include main.cpp /Fe:Breakout.exe /link /LIBPATH:sdl2_dev\SDL2-2.30.2\lib\x64 SDL2.lib SDL2main.lib shell32.lib /SUBSYSTEM:WINDOWS
       shell: cmd
 
     - name: Empaquetar Juego Portable
