@@ -1,4 +1,4 @@
-name: Build & Package (Win/Linux)
+name: Build & Package Portable Windows SDL2 Game
 
 on:
   push:
@@ -9,8 +9,10 @@ on:
 
 jobs:
   build-windows:
-    name: Build Windows
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
     - uses: actions/checkout@v4
 
@@ -24,48 +26,26 @@ jobs:
           zip
 
     - name: Build executable
-      shell: msys2 {0}
       run: |
         mkdir -p bin
         g++ src/main.cpp -o bin/TetrisBreakout.exe -lmingw32 -lSDL2main -lSDL2
 
     - name: Copy SDL2.dll
-      shell: msys2 {0}
       run: |
         cp /mingw64/bin/SDL2.dll bin/
 
-    - name: Package portable ZIP
-      shell: msys2 {0}
+    - name: Copy MinGW runtime DLLs
       run: |
-        zip -r Tetris-Prueba-1_windows-portable.zip bin/
+        cp /mingw64/bin/libwinpthread-1.dll bin/
+        cp /mingw64/bin/libstdc++-6.dll bin/
+        cp /mingw64/bin/libgcc_s_seh-1.dll bin/
+
+    - name: Package ZIP
+      run: |
+        cd bin
+        zip -r ../Tetris-Prueba-1_windows-portable.zip *
 
     - uses: actions/upload-artifact@v4
       with:
         name: tetris-portable-windows
         path: Tetris-Prueba-1_windows-portable.zip
-
-  build-linux:
-    name: Build Linux
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libsdl2-dev zip build-essential
-
-    - name: Build executable
-      run: |
-        mkdir -p bin
-        g++ src/main.cpp -o bin/TetrisBreakout -lSDL2
-
-    - name: Package portable ZIP
-      run: |
-        zip -r Tetris-Prueba-1_linux-portable.zip bin/
-
-    - uses: actions/upload-artifact@v4
-      with:
-        name: tetris-portable-linux
-        path: Tetris-Prueba-1_linux-portable.zip
