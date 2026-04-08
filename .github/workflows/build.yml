@@ -1,46 +1,71 @@
-name: Compilar Breakout SDL2 Portable
+name: Build & Package (Win/Linux)
 
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch: 
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-windows:
+    name: Build Windows
     runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up MSYS2
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        install: >-
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-SDL2
+          zip
+
+    - name: Build executable
+      shell: msys2 {0}
+      run: |
+        mkdir -p bin
+        g++ src/main.cpp -o bin/TetrisBreakout.exe -lmingw32 -lSDL2main -lSDL2
+
+    - name: Copy SDL2.dll
+      shell: msys2 {0}
+      run: |
+        cp /mingw64/bin/SDL2.dll bin/
+
+    - name: Package portable ZIP
+      shell: msys2 {0}
+      run: |
+        zip -r Tetris-Prueba-1_windows-portable.zip bin/
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: tetris-portable-windows
+        path: Tetris-Prueba-1_windows-portable.zip
+
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
 
     steps:
-    - name: Clonar el repositorio
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-    - name: Configurar entorno MSVC (C++)
-      uses: ilammy/msvc-dev-cmd@v1
-
-    - name: Descargar SDL2 (Windows x64)
-      # Usamos la 2.30.2 que es estable y compatible con x64
+    - name: Install dependencies
       run: |
-        Invoke-WebRequest -Uri https://github.com/libsdl-org/SDL/releases/download/release-2.30.2/SDL2-devel-2.30.2-VC.zip -OutFile sdl2.zip
-        Expand-Archive sdl2.zip -DestinationPath sdl2_dev
-      shell: pwsh
+        sudo apt-get update
+        sudo apt-get install -y libsdl2-dev zip build-essential
 
-    - name: Compilar Breakout
-      # 1. /I añade las cabeceras
-      # 2. /MT incluye las librerías estándar dentro del exe
-      # 3. /link conecta con las librerías de SDL2
+    - name: Build executable
       run: |
-        cl.exe /EHsc /MT /Isdl2_dev\SDL2-2.30.2\include main.cpp /Fe:Breakout.exe /link /LIBPATH:sdl2_dev\SDL2-2.30.2\lib\x64 SDL2.lib SDL2main.lib shell32.lib /SUBSYSTEM:WINDOWS
-      shell: cmd
+        mkdir -p bin
+        g++ src/main.cpp -o bin/TetrisBreakout -lSDL2
 
-    - name: Empaquetar Juego Portable
-      # Creamos la carpeta que el usuario final va a descargar
+    - name: Package portable ZIP
       run: |
-        mkdir Breakout_Portable
-        move Breakout.exe Breakout_Portable\
-        copy sdl2_dev\SDL2-2.30.2\lib\x64\SDL2.dll Breakout_Portable\
-      shell: cmd
+        zip -r Tetris-Prueba-1_linux-portable.zip bin/
 
-    - name: Subir Artefacto
-      uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v4
       with:
-        name: Breakout-Windows-x64
-        path: Breakout_Portable\
+        name: tetris-portable-linux
+        path: Tetris-Prueba-1_linux-portable.zip
