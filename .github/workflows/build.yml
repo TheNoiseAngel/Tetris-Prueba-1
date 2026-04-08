@@ -1,0 +1,44 @@
+name: Compilar Juego SDL2 Portable (Windows)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Clonar el repositorio
+      uses: actions/checkout@v4
+
+    - name: Configurar entorno C++ (MSVC)
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Descargar librerías de SDL2
+      # Descargamos la versión oficial precompilada de SDL2 para Visual C++
+      run: |
+        Invoke-WebRequest -Uri https://github.com/libsdl-org/SDL/releases/download/release-2.30.2/SDL2-devel-2.30.2-VC.zip -OutFile sdl2.zip
+        Expand-Archive sdl2.zip -DestinationPath sdl2_dev
+      shell: pwsh
+
+    - name: Compilar el juego con SDL2
+      # Se incluye la ruta de las cabeceras (/I) y la ruta de las librerías (.lib)
+      run: |
+        cl.exe /EHsc /MT /Isdl2_dev\SDL2-2.30.2\include main.cpp /Fe:MiJuego.exe /link /LIBPATH:sdl2_dev\SDL2-2.30.2\lib\x64 SDL2.lib SDL2main.lib shell32.lib /SUBSYSTEM:WINDOWS
+      shell: cmd
+
+    - name: Preparar la carpeta portable
+      # Creamos una carpeta y metemos ahí el .exe y el SDL2.dll
+      run: |
+        mkdir release_build
+        move MiJuego.exe release_build\
+        copy sdl2_dev\SDL2-2.30.2\lib\x64\SDL2.dll release_build\
+      shell: cmd
+
+    - name: Subir el juego empaquetado
+      uses: actions/upload-artifact@v4
+      with:
+        name: Juego-SDL2-Portable
+        path: release_build\*
