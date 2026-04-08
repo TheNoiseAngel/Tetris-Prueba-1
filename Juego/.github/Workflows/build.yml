@@ -1,0 +1,34 @@
+name: Build Multiplatform
+
+on: [push, pull_request]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mi_juego_windows
+          path: build/Release/mi_juego.exe
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SDL2 dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mi_juego_linux
+          path: build/mi_juego
